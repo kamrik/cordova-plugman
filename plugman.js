@@ -97,8 +97,13 @@ plugman.commands =  {
         var opts = {
             subdir: '.',
             cli_variables: cli_variables,
-            www_dir: cli_opts.www
+            www_dir: cli_opts.www,
+            search_path: []
         };
+        if (cli_opts.path) {
+            opts.search_path = cli_opts.path.split(':');
+        }
+
         return plugman.install(cli_opts.platform, cli_opts.project, cli_opts.plugin, cli_opts.plugins_dir, opts);
     },
     'uninstall': function(cli_opts) {
