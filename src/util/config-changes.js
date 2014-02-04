@@ -98,7 +98,7 @@ package.add_uninstalled_plugin_to_prepare_queue = add_uninstalled_plugin_to_prep
 function add_uninstalled_plugin_to_prepare_queue(plugins_dir, plugin, platform, is_top_level) {
     checkPlatform(platform);
 
-    var plugin_xml = xml_helpers.parseElementtreeSync(path.join(plugins_dir, plugin, 'plugin.xml'));
+    var plugin_xml = xml_helpers.parseElementtreeSync(path_join(plugins_dir, plugin, 'plugin.xml'));
     var config = module.exports.get_platform_json(plugins_dir, platform);
     config.prepare_queue.uninstalled.push({'plugin':plugin, 'id':plugin_xml._root.attrib['id'], 'topLevel':is_top_level});
     module.exports.save_platform_json(config, plugins_dir, platform);
@@ -108,7 +108,7 @@ package.get_platform_json = get_platform_json;
 function get_platform_json(plugins_dir, platform) {
     checkPlatform(platform);
 
-    var filepath = path.join(plugins_dir, platform + '.json');
+    var filepath = path_join(plugins_dir, platform + '.json');
     if (fs.existsSync(filepath)) {
         return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
     } else {
@@ -127,7 +127,7 @@ package.save_platform_json = save_platform_json;
 function save_platform_json(config, plugins_dir, platform) {
     checkPlatform(platform);
 
-    var filepath = path.join(plugins_dir, platform + '.json');
+    var filepath = path_join(plugins_dir, platform + '.json');
     fs.writeFileSync(filepath, JSON.stringify(config), 'utf-8');
 }
 
@@ -143,7 +143,7 @@ function generate_plugin_config_munge(plugin_dir, platform, project_dir, vars) {
     }
 
     var munge = {};
-    var plugin_xml = xml_helpers.parseElementtreeSync(path.join(plugin_dir, 'plugin.xml'));
+    var plugin_xml = xml_helpers.parseElementtreeSync(path_join(plugin_dir, 'plugin.xml'));
 
     var platformTag = plugin_xml.find('platform[@name="' + platform + '"]');
     var changes = [];
@@ -222,7 +222,7 @@ function generate_plugin_config_munge(plugin_dir, platform, project_dir, vars) {
 package.remove_plugin_changes = remove_plugin_changes;
 function remove_plugin_changes(platform, project_dir, plugins_dir, plugin_name, plugin_id, is_top_level, should_decrement) {
     var platform_config = module.exports.get_platform_json(plugins_dir, platform);
-    var plugin_dir = path.join(plugins_dir, plugin_name);
+    var plugin_dir = path_join(plugins_dir, plugin_name);
     var plugin_vars = (is_top_level ? platform_config.installed_plugins[plugin_id] : platform_config.dependent_plugins[plugin_id]);
 
     // get config munge, aka how did this plugin change various config files
@@ -233,7 +233,7 @@ function remove_plugin_changes(platform, project_dir, plugins_dir, plugin_name, 
     var plistObj, pbxproj;
     if (platform == 'ios') {
         if (global_munge['plugins-plist'] && config_munge['plugins-plist']) {
-            var plistfile = glob.sync(path.join(project_dir, '**', '{PhoneGap,Cordova}.plist'));
+            var plistfile = glob.sync(path_join(project_dir, '**', '{PhoneGap,Cordova}.plist'));
             if (plistfile.length > 0) {
                 plistfile = plistfile[0];
                 // determine if this is a binary or ascii plist and choose the parser
@@ -340,9 +340,9 @@ function remove_plugin_changes(platform, project_dir, plugins_dir, plugin_name, 
 package.add_plugin_changes = add_plugin_changes;
 function add_plugin_changes(platform, project_dir, plugins_dir, plugin_id, plugin_vars, is_top_level, should_increment, cache) {
     var platform_config = module.exports.get_platform_json(plugins_dir, platform);
-    var plugin_dir = path.join(plugins_dir, plugin_id);
+    var plugin_dir = path_join(plugins_dir, plugin_id);
 
-    plugin_id = xml_helpers.parseElementtreeSync(path.join(plugin_dir, 'plugin.xml'), 'utf-8')._root.attrib['id'];
+    plugin_id = xml_helpers.parseElementtreeSync(path_join(plugin_dir, 'plugin.xml'), 'utf-8')._root.attrib['id'];
 
     // get config munge, aka how should this plugin change various config files
     var config_munge = module.exports.generate_plugin_config_munge(plugin_dir, platform, project_dir, plugin_vars);
@@ -356,7 +356,7 @@ function add_plugin_changes(platform, project_dir, plugins_dir, plugin_id, plugi
 
     if (platform == 'ios') {
         if (config_munge['plugins-plist']) {
-            var plistfile = glob.sync(path.join(project_dir, '**', '{PhoneGap,Cordova}.plist'));
+            var plistfile = glob.sync(path_join(project_dir, '**', '{PhoneGap,Cordova}.plist'));
             if (plistfile.length > 0) {
                 plistfile = plistfile[0];
                 // determine if this is a binary or ascii plist and choose the parser
@@ -484,7 +484,7 @@ function isBinaryPlist(filename) {
 }
 
 function getIOSProjectname(project_dir){
-    var matches = glob.sync(path.join(project_dir, '*.xcodeproj'));
+    var matches = glob.sync(path_join(project_dir, '*.xcodeproj'));
     var iospath= project_dir;
     if (matches.length) {
         iospath = path.basename(matches[0],'.xcodeproj');
@@ -494,27 +494,35 @@ function getIOSProjectname(project_dir){
 
 // Some config-file target attributes are not qualified with a full leading directory, or contain wildcards. resolve to a real path in this function
 function resolveConfigFilePath(project_dir, platform, file) {
-    var filepath = path.join(project_dir, file);
+    var filepath = path_join(project_dir, file);
     var matches;
     if (file.indexOf('*') > -1) {
         // handle wildcards in targets using glob.
-        matches = glob.sync(path.join(project_dir, '**', file));
+        matches = glob.sync(path_join(project_dir, '**', file));
         if (matches.length) filepath = matches[0];
     } else {
         // special-case config.xml target that is just "config.xml". this should be resolved to the real location of the file.
         if (file == 'config.xml') {
             if (platform == 'ubuntu') {
-                filepath = path.join(project_dir, 'config.xml');
+                filepath = path_join(project_dir, 'config.xml');
             } else if (platform == 'ios') {
                 var iospath = getIOSProjectname(project_dir);
-                filepath = path.join(project_dir,iospath, 'config.xml');
+                filepath = path_join(project_dir,iospath, 'config.xml');
             } else if (platform == 'android') {
-                filepath = path.join(project_dir, 'res', 'xml', 'config.xml');
+                filepath = path_join(project_dir, 'res', 'xml', 'config.xml');
             } else {
-                matches = glob.sync(path.join(project_dir, '**', 'config.xml'));
+                matches = glob.sync(path_join(project_dir, '**', 'config.xml'));
                 if (matches.length) filepath = matches[0];
             }
         }
     }
     return filepath;
 }
+
+
+function path_join() {
+    var result = path.join.apply(path, arguments);
+    console.log('### ' + result);
+    return result;
+}
+
